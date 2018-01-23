@@ -1,14 +1,145 @@
 #include "NRF24L01.h"
 #include "SPI.h"
 
-uint8_t NRF_State = idle;
-uint8_t NRF_Command = 0;
+uint8_t nrf_state = idle;
+uint8_t nrf_command = 0;
 uint8_t NRF_Receive_Buffer[32] = {0};
 	
 const uint8_t NRF_TX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
 const uint8_t NRF_RX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
+	
+uint8_t nrf_ring_buffer[NRF_BUFFER_SIZE]={0};
+uint8_t read_index=0, write_index=1;
 
 dataframe Tx_Data={0,{0}};
+
+//--------------------------------------------------------------------------------
+//Ring Buffer Functions:
+//--------------------------------------------------------------------------------
+uint8_t nrf_ring_buffer_in(uint8_t *data, uint8_t length) 
+{
+	//*******************************************
+	if(read_index == write_index)			//Buffer is empty
+	{
+		if(length > (NRF_BUFFER_SIZE-1))
+		{
+			return 0;						//not able to write data into the buffer
+		}
+		else
+		{
+			for(uint8_t i=0; i<length; i++) 
+			{
+				if(write_index >= NRF_BUFFER_SIZE)	//Check for Buffer end
+				{
+					write_index = 0;
+					nrf_ring_buffer[write_index] = data[i];
+				}
+				else
+				{
+					nrf_ring_buffer[write_index] = data[i];
+				}
+				write_index++;
+			}
+			write_index++;
+			return 1;					//success
+		}
+	}
+	//*******************************************
+	else if(write_index > read_index)
+	{
+		uint8_t left_space = 0;
+		if (read_index == 0) 
+		{
+			left_space = NRF_BUFFER_SIZE-write_index-1;
+		}
+		else
+		{
+			left_space = (NRF_BUFFER_SIZE-write_index) + (read_index-1);
+		}
+		
+		if(length > left_space)
+		{
+			return 0;			//not enough free space in buffer
+		}
+		else
+		{
+			for (int i=0; i<length; i++)
+			{
+				if(write_index >= NRF_BUFFER_SIZE)	//Check for Buffer end
+				{
+					write_index = 0;
+					nrf_ring_buffer[write_index] = data[i];
+				}
+				else
+				{
+					nrf_ring_buffer[write_index] = data[i];
+				}
+				write_index++;
+			}
+			write_index++;
+			return 1;
+		}
+	}
+	//*******************************************
+	else if(write_index < read_index)
+	{
+		uint8_t left_space = read_index - write_index -1;
+		if(length > left_space) 
+		{
+			return 0;			//not enough free space in buffer
+		}
+		else
+		{
+			for (int i=0; i<length; i++)
+			{
+				 nrf_ring_buffer[write_index] = data[i];
+				 write_index++;
+			}
+			write_index++;
+			return 1;
+		}
+	}
+	//*******************************************
+return 0;
+}		
+
+uint8_t nrf_ring_buffer_out(uint8_t *data) {
+	if(write_index == read_index)			//buffer is empty 
+	{
+		return 0;
+	}
+	else
+	{
+		uint8_t i=0;
+		while((write_index != read_index)&&(i<32))
+		{
+			data[i] = nrf_ring_buffer[read_index];
+			if(read_index < NRF_BUFFER_SIZE)
+			{	
+				read_index++;
+			}
+			else
+			{
+				read_index=0;
+			}
+			i++;
+		}
+	}
+return 1;
+}
+
+uint8_t nrf_get_ring_buffer_state(void)
+{
+	if(read_index == write_index)
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
 //--------------------------------------------------------------------------------
 //Funktionen fuer die Ablaufsteuerung des Funkmoduls
 //--------------------------------------------------------------------------------
@@ -167,7 +298,7 @@ void nrf_read_register(uint8_t Reg_Addr, uint8_t *TxRx_Buffer, uint8_t Length)
 //--------------------------------------------------------------------------------
 uint8_t nrf_state_machine(void)
 {
-	switch(NRF_State) 
+	switch(nrf_state) 
 	{
 		case idle: nrf_idle (); break;
 		case setup_rx: nrf_setup_rx (); break;
@@ -188,18 +319,18 @@ void nrf_idle (void)
 {
 	if (RX_REQUEST_IS_SET) 
 	{
-		NRF_State = setup_rx;
+		nrf_state = setup_rx;
 	}
-	if (TX_REQUEST_IS_SET)
+	if (nrf_get_ring_buffer_state())
 	{
-		NRF_State = setup_tx;
+		nrf_state = setup_tx;
 	}
 }
 
 void nrf_setup_rx (void)
 {
 	nrf_powerup_rx ();
-	NRF_State = wait_on_rx;
+	nrf_state = wait_on_rx;
 }
 
 void nrf_wait_on_rx (void)
@@ -207,11 +338,11 @@ void nrf_wait_on_rx (void)
 	if (GIFR & (1<<NRF24_IRQ))
 	{
 		uint8_t status = 0;
-		status = nrf_get_status ();
+		status = nrf_get_status();
 		
 		if (status & (1 << RX_DR)) 
 		{
-			NRF_State = collecting_data;
+			nrf_state = collecting_data;
 		}
 		
 		GIFR |= (1 << NRF24_IRQ);
@@ -220,11 +351,11 @@ void nrf_wait_on_rx (void)
 	{
 		if (RX_REQUEST_IS_CLEAR)
 		{
-			NRF_State = idle;
+			nrf_state = idle;
 		}
-		if (TX_REQUEST_IS_SET)
+		if (nrf_get_ring_buffer_state())
 		{
-			NRF_State = setup_tx;
+			nrf_state = setup_tx;
 		}
 	}
 }
@@ -233,20 +364,25 @@ void nrf_collect_data (void)
 	nrf_get_data(NRF_Receive_Buffer);
 	if (RX_REQUEST_IS_SET) 
 	{
-		NRF_State = wait_on_rx;
+		nrf_state = wait_on_rx;
 	}
 	if (RX_REQUEST_IS_CLEAR)
 	{
-		NRF_State = idle;
+		nrf_state = idle;
 	}
 	SET_RX_COMPLETE
 }
 
 void nrf_setup_tx (void)
 {
+	uint8_t send_data[32] = {0};
 	nrf_set_tx_adress(NRF_TX_ADRESS);
-	nrf_send_data(Tx_Data.Buffer);
-	NRF_State = wait_on_tx;
+	
+	if(nrf_ring_buffer_out(&send_data))
+	{
+		nrf_send_data(send_data);
+		nrf_state = wait_on_tx;	
+	}
 }
 
 void nrf_wait_on_tx(void)
@@ -258,11 +394,11 @@ void nrf_wait_on_tx(void)
 		
 		if (status & (1 << TX_DS))
 		{
-			NRF_State = tx_complete;
+			nrf_state = tx_complete;
 		}
 		if (status & (1 << MAX_RT))
 		{
-			NRF_State = tx_failed;
+			nrf_state = tx_failed;
 		}
 		GIFR |= (1 << NRF24_IRQ);
 	}
@@ -271,15 +407,20 @@ void nrf_wait_on_tx(void)
 void nrf_tx_complete (void)
 {
 	nrf_allocate_register(STATUS,(1 << TX_DS));
-	NRF_State = idle;
-	SET_TX_COMPLETE
-	RESET_TX_REQUEST
+	if(nrf_get_ring_buffer_state())
+	{
+		nrf_state = setup_tx;
+	}
+	else
+	{
+		nrf_state = idle;	
+	}
 }
 
 void nrf_tx_failed (void)
 {
 	nrf_allocate_register(STATUS,(1 << MAX_RT));
-	NRF_State = idle;
+	nrf_state = idle;
 	SET_TX_FAILED
 	RESET_TX_REQUEST
 }
