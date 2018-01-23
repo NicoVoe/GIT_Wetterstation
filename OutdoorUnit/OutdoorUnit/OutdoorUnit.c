@@ -22,6 +22,7 @@ extern uint8_t dcf_request, dcf_ready;
 extern Time_Data time;
 extern uint16_t ow_temp, ow_temp2;
 
+uint8_t test = 0;
 
 int main(void) 
 {

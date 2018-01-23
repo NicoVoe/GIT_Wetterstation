@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "OutdoorUnit", "OutdoorUnit\OutdoorUnit.cproj", "{4562DE8C-C951-48B9-AAA1-0DE1DF6A98B4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4562DE8C-C951-48B9-AAA1-0DE1DF6A98B4}.Debug|AVR.ActiveCfg = Debug|AVR
+		{4562DE8C-C951-48B9-AAA1-0DE1DF6A98B4}.Debug|AVR.Build.0 = Debug|AVR
+		{4562DE8C-C951-48B9-AAA1-0DE1DF6A98B4}.Release|AVR.ActiveCfg = Release|AVR
+		{4562DE8C-C951-48B9-AAA1-0DE1DF6A98B4}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
