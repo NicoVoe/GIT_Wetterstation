@@ -13,6 +13,12 @@
 #include "DCF77.h"
 #include "OneWire.h"
 
+
+#define DEBUG_LED_DDR DDRB
+#define DEBUG_LED_PORT PORTB
+#define DEBUG_LED PB2
+uint16_t Debug_Delay = 0xFFFF;
+
 void send_date(void);
 void send_nrf_string(char *s);
 
@@ -21,8 +27,6 @@ extern dataframe Tx_Data;
 extern uint8_t dcf_request, dcf_ready;
 extern Time_Data time;
 extern uint16_t ow_temp, ow_temp2;
-
-uint8_t test = 0;
 
 int main(void) 
 {
@@ -34,7 +38,7 @@ int main(void)
 	ow_init();
 	sei();
 	_delay_ms(2000);
-	send_nrf_string("Außenmodul> Begin:\n");
+	//send_nrf_string("Außenmodul> Begin:\n");
 	
 	dcf_request = 1;
 	char string[32] = {0};
@@ -42,9 +46,10 @@ int main(void)
 	double temp = 0.0;
 	double temp2 = 0.0;
 	uint64_t ID = 0xD204165168A5FF28;	//{0xD2}{0x04}{0x16}{0x51}{0x68}{0xA5}{0xFF}{0x28} Flach
-	uint64_t ID2= 0x7F0416A04081FF28;	//{0x7F}{0x04}{0x16}{0xA0}{0x40}{0x81}{0xFF}{0x28} rund
+	//uint64_t ID2= 0x7F0416A04081FF28;	//{0x7F}{0x04}{0x16}{0xA0}{0x40}{0x81}{0xFF}{0x28} rund
+	uint64_t ID3 =	0xCF031661B4DDFF28;	//{28}{FF}{DD}{B4}{61}{16}{03}{CF}{80}
 
-	SET_TX_REQUEST
+	//SET_TX_REQUEST
 	
 	while(1) 
 	{
@@ -55,7 +60,7 @@ int main(void)
 		
 		if(OW_CONV_COMPLETE_IS_SET)
 		{
-			ow_get_temp(ID, ID2);		
+			ow_get_temp(ID, ID3);		
 			OW_CLEAR_CONV_COMPLETE
 		}
 		
@@ -68,15 +73,21 @@ int main(void)
 		
 		if(achieved_time(3000 ,&debug_delay)) 
 		{
-			PORTB ^= (1<<PB2);	
-			/*
-			ID = ow_read_rom();
-			for(int i=0; i<8; i++) {
+			DEBUG_LED_PORT ^= 1 << DEBUG_LED;		
+			
+			/*uint64_t ID = ow_read_rom();
+			for(int i=0; i<8; i++) 
+			{
 				Tx_Data.Buffer[i] = (ID>>(i*8)&0xFF);
 			}
 			Tx_Data.Buffer[8]=0;
-			SET_TX_REQUEST
-			*/
+			
+			for (int i = 9; i<32; i++)
+			{
+				Tx_Data.Buffer[i]= 0;
+			}
+			SET_TX_REQUEST*/
+			
 			temp=(double)ow_temp/16.0;
 			dtostrf(temp, 5, 2, string);
 			string[4]='°';
