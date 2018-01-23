@@ -1,0 +1,13 @@
+*.hex 
+*.elf
+*.o
+*.d
+*.mk
+*.eep
+*.lss
+*.Iss
+*.map
+*.srec
+*.cproj
+*.atsln
+*.atsuo
