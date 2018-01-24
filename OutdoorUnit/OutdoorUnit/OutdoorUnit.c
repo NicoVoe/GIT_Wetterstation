@@ -29,15 +29,16 @@ extern Time_Data time;
 extern uint16_t ow_temp, ow_temp2;
 
 int main(void) 
-{	
+{
+    DDRB |= (1<<PB2);
+	
 	SPI_Init();
 	nrf_init();
 	system_time_init();
 	ow_init();
 	sei();
 	_delay_ms(2000);
-	nrf_ring_buffer_in("OutdoorModule >> ", 18);
-	nrf_ring_buffer_in("Begin", 6);
+	//send_nrf_string("Außenmodul> Begin:\n");
 	
 	dcf_request = 1;
 	char string[32] = {0};
@@ -85,7 +86,7 @@ int main(void)
 			{
 				Tx_Data.Buffer[i]= 0;
 			}
-			SET_TX_REQUEST
+			SET_TX_REQUEST*/
 			
 			temp=(double)ow_temp/16.0;
 			dtostrf(temp, 5, 2, string);
@@ -108,7 +109,6 @@ int main(void)
 			
 			nrf_send_data(string);
 			ow_start();
-			*/
 		}
     }
 }

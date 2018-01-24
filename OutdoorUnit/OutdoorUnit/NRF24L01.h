@@ -24,7 +24,6 @@
 
 #define NRF_CHANNEL 0x64
 #define NRF_PAYLOAD_LEN 32
-#define NRF_BUFFER_SIZE 50
 #define NRF_ADDR_LEN 5
 
 #define RX_REQUEST 0
@@ -34,30 +33,30 @@
 #define TX_FAILED 4
 
 
-#define SET_RX_REQUEST nrf_command |= (1 << RX_REQUEST);
-#define SET_TX_REQUEST nrf_command |= (1 << TX_REQUEST);
-#define SET_RX_COMPLETE nrf_command |= (1 << RX_COMPLETE);
-#define SET_TX_COMPLETE nrf_command |= (1 << TX_COMPLETE);
-#define SET_TX_FAILED nrf_command |= (1 << TX_FAILED);
-#define RESET_RX_REQUEST nrf_command &= ~(1 << RX_REQUEST);
-#define RESET_TX_REQUEST nrf_command &= ~(1 << TX_REQUEST);
-#define RESET_RX_COMPLETE nrf_command &= ~(1 << RX_COMPLETE);
-#define RESET_TX_COMPLETE nrf_command &= ~(1 << TX_COMPLETE);
-#define RESET_TX_FAILED nrf_command &= ~(1 << TX_FAILED);
+#define SET_RX_REQUEST NRF_Command |= (1 << RX_REQUEST);
+#define SET_TX_REQUEST NRF_Command |= (1 << TX_REQUEST);
+#define SET_RX_COMPLETE NRF_Command |= (1 << RX_COMPLETE);
+#define SET_TX_COMPLETE NRF_Command |= (1 << TX_COMPLETE);
+#define SET_TX_FAILED NRF_Command |= (1 << TX_FAILED);
+#define RESET_RX_REQUEST NRF_Command &= ~(1 << RX_REQUEST);
+#define RESET_TX_REQUEST NRF_Command &= ~(1 << TX_REQUEST);
+#define RESET_RX_COMPLETE NRF_Command &= ~(1 << RX_COMPLETE);
+#define RESET_TX_COMPLETE NRF_Command &= ~(1 << TX_COMPLETE);
+#define RESET_TX_FAILED NRF_Command &= ~(1 << TX_FAILED);
 
-#define RX_REQUEST_IS_SET nrf_command & (1 << RX_REQUEST)
-#define RX_REQUEST_IS_CLEAR !(nrf_command & (1 << RX_REQUEST))
-#define TX_REQUEST_IS_SET nrf_command & (1 << TX_REQUEST)
-#define TX_REQUEST_IS_CLEAR !(nrf_command & (1 << TX_REQUEST))
-#define RX_COMPLETE_IS_SET nrf_command & (1 << RX_COMPLETE)
-#define RX_COMPLETE_IS_CLEAR !(nrf_command & (1 << RX_COMPLETE))
-#define TX_COMPLETE_IS_SET nrf_command & (1 << TX_COMPLETE)
-#define TX_COMPLETE_IS_CLEAR !(nrf_command & (1 << TX_COMPLETE))
-#define TX_FAILED_IS_SET nrf_command & (1 << TX_FAILED)
-#define TX_FAILED_IS_CLEAR !(nrf_command & (1 << TX_FAILED)
+#define RX_REQUEST_IS_SET NRF_Command & (1 << RX_REQUEST)
+#define RX_REQUEST_IS_CLEAR !(NRF_Command & (1 << RX_REQUEST))
+#define TX_REQUEST_IS_SET NRF_Command & (1 << TX_REQUEST)
+#define TX_REQUEST_IS_CLEAR !(NRF_Command & (1 << TX_REQUEST))
+#define RX_COMPLETE_IS_SET NRF_Command & (1 << RX_COMPLETE)
+#define RX_COMPLETE_IS_CLEAR !(NRF_Command & (1 << RX_COMPLETE))
+#define TX_COMPLETE_IS_SET NRF_Command & (1 << TX_COMPLETE)
+#define TX_COMPLETE_IS_CLEAR !(NRF_Command & (1 << TX_COMPLETE))
+#define TX_FAILED_IS_SET NRF_Command & (1 << TX_FAILED)
+#define TX_FAILED_IS_CLEAR !(NRF_Command & (1 << TX_FAILED)
 
 enum {idle=1, setup_rx, wait_on_rx, collecting_data, setup_tx, wait_on_tx, tx_failed, tx_complete};
-extern uint8_t nrf_command;
+extern uint8_t NRF_Command;
 typedef struct
 {
 	uint8_t adress;
@@ -91,10 +90,6 @@ void nrf_setup_tx (void);
 void nrf_wait_on_tx(void);
 void nrf_tx_complete (void);
 void nrf_tx_failed (void);
-
-uint8_t nrf_ring_buffer_in(uint8_t *data, uint8_t length);
-uint8_t nrf_ring_buffer_out(uint8_t *data);
-uint8_t nrf_get_ring_buffer_state(void); 
 
 
 //Memory Map - address defines
