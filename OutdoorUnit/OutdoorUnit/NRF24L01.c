@@ -1,20 +1,22 @@
 #include "NRF24L01.h"
 #include "SPI.h"
 
-uint8_t NRF_State = idle;
-uint8_t NRF_Command = 0;
-uint8_t NRF_Receive_Buffer[32] = {0};
+uint8_t nrf_state = idle;
+uint8_t nrf_command = 0;
+uint8_t nrf_receive_buffer[32] = {0};
 	
 const uint8_t NRF_TX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
 const uint8_t NRF_RX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
 
-dataframe Tx_Data={0,{0}};
+uint8_t nrf_send_buffer[NRF_BUFFER_SIZE]={0};
+circular_buffer nrf_cb={nrf_send_buffer,0,0,NRF_BUFFER_SIZE};
+	
 //--------------------------------------------------------------------------------
 //Funktionen fuer die Ablaufsteuerung des Funkmoduls
 //--------------------------------------------------------------------------------
 void nrf_init()										//Interrupt und Chipselect init
 {
-	CS_DDR|= ((1<<CSN)|(1<<CE));
+	NRF_CS_DDR|= ((1<<NRF_CSN)|(1<<NRF_CE));
 	NRF24_UNSELECT
 	NRF24_DEACTIVATE_CE
 	
@@ -24,6 +26,11 @@ void nrf_init()										//Interrupt und Chipselect init
 	
 	_delay_ms(120);
 	nrf_config();
+}
+
+void nrf_send(char* string, uint8_t length) 
+{
+	cb_push(&nrf_cb, string, length);
 }
 
 void nrf_config()										//Funkmodul init
@@ -167,7 +174,7 @@ void nrf_read_register(uint8_t Reg_Addr, uint8_t *TxRx_Buffer, uint8_t Length)
 //--------------------------------------------------------------------------------
 uint8_t nrf_state_machine(void)
 {
-	switch(NRF_State) 
+	switch(nrf_state) 
 	{
 		case idle: nrf_idle (); break;
 		case setup_rx: nrf_setup_rx (); break;
@@ -188,18 +195,18 @@ void nrf_idle (void)
 {
 	if (RX_REQUEST_IS_SET) 
 	{
-		NRF_State = setup_rx;
+		nrf_state = setup_rx;
 	}
-	if (TX_REQUEST_IS_SET)
+	if (!cb_is_empty(&nrf_cb))
 	{
-		NRF_State = setup_tx;
+		nrf_state = setup_tx;
 	}
 }
 
 void nrf_setup_rx (void)
 {
 	nrf_powerup_rx ();
-	NRF_State = wait_on_rx;
+	nrf_state = wait_on_rx;
 }
 
 void nrf_wait_on_rx (void)
@@ -211,7 +218,7 @@ void nrf_wait_on_rx (void)
 		
 		if (status & (1 << RX_DR)) 
 		{
-			NRF_State = collecting_data;
+			nrf_state = collecting_data;
 		}
 		
 		GIFR |= (1 << NRF24_IRQ);
@@ -220,33 +227,37 @@ void nrf_wait_on_rx (void)
 	{
 		if (RX_REQUEST_IS_CLEAR)
 		{
-			NRF_State = idle;
+			nrf_state = idle;
 		}
-		if (TX_REQUEST_IS_SET)
+		if (!cb_is_empty(&nrf_cb))
 		{
-			NRF_State = setup_tx;
+			nrf_state = setup_tx;
 		}
 	}
 }
 void nrf_collect_data (void)
 {
-	nrf_get_data(NRF_Receive_Buffer);
+	nrf_get_data(nrf_receive_buffer);
 	if (RX_REQUEST_IS_SET) 
 	{
-		NRF_State = wait_on_rx;
+		nrf_state = wait_on_rx;
 	}
 	if (RX_REQUEST_IS_CLEAR)
 	{
-		NRF_State = idle;
+		nrf_state = idle;
 	}
 	SET_RX_COMPLETE
 }
 
 void nrf_setup_tx (void)
 {
+	uint8_t send_data[33] = {0};
 	nrf_set_tx_adress(NRF_TX_ADRESS);
-	nrf_send_data(Tx_Data.Buffer);
-	NRF_State = wait_on_tx;
+	if(cb_pop(&nrf_cb, send_data, 33)) 
+	{	
+		nrf_send_data(send_data);
+	}
+	nrf_state = wait_on_tx;
 }
 
 void nrf_wait_on_tx(void)
@@ -258,11 +269,11 @@ void nrf_wait_on_tx(void)
 		
 		if (status & (1 << TX_DS))
 		{
-			NRF_State = tx_complete;
+			nrf_state = tx_complete;
 		}
 		if (status & (1 << MAX_RT))
 		{
-			NRF_State = tx_failed;
+			nrf_state = tx_failed;
 		}
 		GIFR |= (1 << NRF24_IRQ);
 	}
@@ -271,7 +282,9 @@ void nrf_wait_on_tx(void)
 void nrf_tx_complete (void)
 {
 	nrf_allocate_register(STATUS,(1 << TX_DS));
-	NRF_State = idle;
+	if(!cb_is_empty(&nrf_cb)) {
+		nrf_state = idle;	
+	}
 	SET_TX_COMPLETE
 	RESET_TX_REQUEST
 }
@@ -279,7 +292,7 @@ void nrf_tx_complete (void)
 void nrf_tx_failed (void)
 {
 	nrf_allocate_register(STATUS,(1 << MAX_RT));
-	NRF_State = idle;
+	nrf_state = idle;
 	SET_TX_FAILED
 	RESET_TX_REQUEST
 }

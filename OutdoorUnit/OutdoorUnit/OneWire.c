@@ -1,13 +1,21 @@
+//*************************************************************************************************
+//		One Wire Library
+//
+//		date: 24.01.2018
+//*************************************************************************************************
+// version ##
+
 #include "OneWire.h"
 
 /////////////////////////////////////////////////////////////////////////////////
 // variables
 ////////////////////////////////////////////////////////////////////////////////
 
-uint16_t conv_delay = 0xFFFF, ow_temp = 0, ow_temp2=0;
+uint16_t conv_delay = 0xFFFF;
+int16_t ow_temp = 0, ow_temp2 = 0;
 enum {ow_state_idle = 1, ow_state_start_conversation, ow_state_wait_for_conv, temp_data_available_ow, rw_register_ow, ow_state_start_read, ow_state_fail};
 uint8_t ow_state = 1, ow_flags = 0;
-uint64_t ow_current_id=0, ow_current_id2 = 0;
+uint64_t ow_current_id=0;
 int (*ptr) (char *s);
 
 // UART initialisieren
@@ -31,15 +39,14 @@ void ow_start(void)
 	OW_SET_CONV_REQUEST
 }
 
-void ow_get_temp(uint64_t id, uint64_t id2) 
+void ow_get_temp(uint64_t id) 
 {
 	ow_current_id = id;
-	ow_current_id2 = id2;
 	
 	OW_SET_READ_REQUEST	
 }
 
-void ow_state_machine(void)
+uint8_t ow_state_machine(void)
 {
 	switch(ow_state)
 	{
@@ -50,6 +57,17 @@ void ow_state_machine(void)
 		case ow_state_fail:					ow_fail();break;
 		default: break;
 	}
+
+// current status return
+	if(OW_CONV_REQUEST_IS_SET || OW_READ_REQUEST_IS_SET)		// OneWire state machine is busy
+	{															// do not start a request
+		return 0;
+	}
+	else														// OneWire is ready
+	{
+		return 1;
+	}	
+	
 }
 
 void ow_idle(void)
@@ -81,7 +99,7 @@ void ow_start_conversation(void)
 
 void ow_conversion(void) 
 {
-	if (achieved_time(1000, &conv_delay)) 
+	if (achieved_time(750, &conv_delay)) 
 	{
 		OW_SET_CONV_COMPLETE
 		OW_CLEAR_CONV_REQUEST
@@ -102,17 +120,14 @@ void ow_read_temp(void)
 	ow_temp_high = ow_read_byte();
 	ow_temp = ow_temp_low | (ow_temp_high << 8);
 	
-	ow_reset();
-	ow_write_byte(MATCH_ROM);				// Skip ROM, only one device on the bus
-	ow_write_rom(ow_current_id2);
-	ow_write_byte(OW_READ_SCRATCHPAD);		// read scratchpad
-	
-	ow_temp_low = ow_read_byte();
-	ow_temp_high = ow_read_byte();
-	ow_temp2 = ow_temp_low | (ow_temp_high << 8);
-	
 	OW_CLEAR_READ_REQUEST
 	
+	ow_state = ow_state_idle;
+}
+
+void ow_fail(void)
+{
+	OW_SET_FAIL
 	ow_state = ow_state_idle;
 }
 
@@ -205,9 +220,5 @@ void ow_set_baud (uint8_t Baud_Rate)
 	UCSRB |= (0<<RXCIE)|(0<<TXCIE)|(1<<RXEN)|(1<<TXEN);
 }
 
-void ow_fail(void) 
-{
-	OW_SET_FAIL
-	ow_state = ow_state_idle;
-}
+
 

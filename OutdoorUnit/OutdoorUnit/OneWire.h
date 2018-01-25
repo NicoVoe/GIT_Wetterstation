@@ -1,3 +1,11 @@
+//*************************************************************************************************
+//		One Wire Library
+//
+//		date: 24.01.2018
+//*************************************************************************************************
+// version ##
+// description  ...
+
 #ifndef OneWire_H_
 #define OneWire_H_
 
@@ -10,19 +18,19 @@
 #include "system_time.h"
 
 //DS18B20 Befehlssatz:
-#define MATCH_ROM		0x55
-#define OW_SKIP_ROM		0xCC
-#define	SEARCH_ROM		0xF0
-#define CONVERT_T		0x44	
-#define OW_READ_ROM		0x33	
+#define MATCH_ROM			0x55
+#define OW_SKIP_ROM			0xCC
+#define	SEARCH_ROM			0xF0
+#define CONVERT_T			0x44	
+#define OW_READ_ROM			0x33	
 #define OW_READ_SCRATCHPAD	0xBE
-#define WRITE			0x4E
-#define EE_WRITE		0x48
-#define EE_RECALL		0xB8
-#define PRESENCE_PULSE	0xF0
+#define WRITE				0x4E
+#define EE_WRITE			0x48
+#define EE_RECALL			0xB8
+#define PRESENCE_PULSE		0xF0
 //sonstiges
-#define OW_RW_BAUD		8			// 8 -> 115200
-#define OW_RESET_BAUD	103			// 103 -> 9600
+#define OW_RW_BAUD			8			// 8 -> 115200
+#define OW_RESET_BAUD		103			// 103 -> 9600
 //One Wire interne Flags
 #define OW_CONV_REQUEST		0
 #define OW_READ_REQUEST		1
@@ -30,24 +38,24 @@
 #define OW_FAIL				7
 
 //Macros:
-#define OW_SET_CONV_REQUEST ow_flags |= (1 << OW_CONV_REQUEST);
-#define OW_SET_READ_REQUEST ow_flags |= (1 << OW_READ_REQUEST);
-#define OW_SET_CONV_COMPLETE ow_flags |= (1 << OW_CONV_COMPLETE);
-#define OW_SET_FAIL ow_flags |= (1 << OW_FAIL);
+#define OW_SET_CONV_REQUEST		ow_flags |= (1 << OW_CONV_REQUEST);
+#define OW_SET_READ_REQUEST		ow_flags |= (1 << OW_READ_REQUEST);
+#define OW_SET_CONV_COMPLETE	ow_flags |= (1 << OW_CONV_COMPLETE);
+#define OW_SET_FAIL				ow_flags |= (1 << OW_FAIL);
 
-#define OW_CLEAR_CONV_REQUEST ow_flags &= ~(1 << OW_CONV_REQUEST);
-#define OW_CLEAR_READ_REQUEST ow_flags &= ~(1 << OW_READ_REQUEST);
-#define OW_CLEAR_CONV_COMPLETE ow_flags &= ~(1 << OW_CONV_COMPLETE);
-#define OW_CLEAR_FAIL ow_flags &= ~(1 << OW_FAIL);
+#define OW_CLEAR_CONV_REQUEST	ow_flags &= ~(1 << OW_CONV_REQUEST);
+#define OW_CLEAR_READ_REQUEST	ow_flags &= ~(1 << OW_READ_REQUEST);
+#define OW_CLEAR_CONV_COMPLETE	ow_flags &= ~(1 << OW_CONV_COMPLETE);
+#define OW_CLEAR_FAIL			ow_flags &= ~(1 << OW_FAIL);
 
-#define OW_CONV_REQUEST_IS_SET ow_flags & (1 << OW_CONV_REQUEST)
-#define OW_CONV_REQUEST_IS_CLEAR !(ow_flags & (1 << OW_CONV_REQUEST))
-#define OW_READ_REQUEST_IS_SET ow_flags & (1 << OW_READ_REQUEST)
-#define OW_READ_REQUEST_IS_CLEAR !(ow_flags & (1 << OW_READ_REQUEST))
-#define OW_CONV_COMPLETE_IS_SET ow_flags & (1 << OW_CONV_COMPLETE)
-#define OW_CONV_COMPLETE_IS_CLEAR !(ow_flags & (1 << OW_CONV_COMPLETE))
-#define OW_FAIL_IS_SET ow_flags & (1 << OW_FAIL)
-#define OW_FAIL_IS_CLEAR !(ow_flags & (1 << OW_FAIL))
+#define OW_CONV_REQUEST_IS_SET		ow_flags & (1 << OW_CONV_REQUEST)
+#define OW_CONV_REQUEST_IS_CLEAR	!(ow_flags & (1 << OW_CONV_REQUEST))
+#define OW_READ_REQUEST_IS_SET		ow_flags & (1 << OW_READ_REQUEST)
+#define OW_READ_REQUEST_IS_CLEAR	!(ow_flags & (1 << OW_READ_REQUEST))
+#define OW_CONV_COMPLETE_IS_SET		ow_flags & (1 << OW_CONV_COMPLETE)
+#define OW_CONV_COMPLETE_IS_CLEAR	!(ow_flags & (1 << OW_CONV_COMPLETE))
+#define OW_FAIL_IS_SET				ow_flags & (1 << OW_FAIL)
+#define OW_FAIL_IS_CLEAR			!(ow_flags & (1 << OW_FAIL))
 
 extern uint8_t ow_flags;
 
@@ -56,8 +64,8 @@ extern uint8_t ow_flags;
 //--------------------------------------------------------------------------------
 void ow_init(void);
 void ow_start(void);
-void ow_get_temp(uint64_t id, uint64_t id2);
-void ow_state_machine(void);
+void ow_get_temp(uint64_t id);
+uint8_t ow_state_machine(void);
 void ow_idle(void);
 void ow_start_conversation(void);
 void ow_conversion(void);

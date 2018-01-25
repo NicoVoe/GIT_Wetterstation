@@ -5,8 +5,9 @@
 #define F_CPU 8000000UL
 #endif
 
-#include <string.h>
+//#include <string.h>
 #include <avr/io.h>
+#include <string.h>
 
 //DCF Signal Format
 #define DCF_ONE					200

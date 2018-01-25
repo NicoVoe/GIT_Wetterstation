@@ -8,21 +8,23 @@
 #include <avr/io.h>
 #include <inttypes.h>
 #include <util/delay.h>
+#include "CircularBuffer.h"
 
 //--------------------------------------------------------------------------------
 //:
 //--------------------------------------------------------------------------------
-#define CS_DDR DDRD
-#define CS_PORT PORTD
-#define CSN PD7
-#define CE PD6
-#define NRF24_UNSELECT				CS_PORT |= (1<<CSN);
-#define NRF24_SELECT				CS_PORT &= ~(1<<CSN);
-#define NRF24_DEACTIVATE_CE			CS_PORT &= ~(1<<CE);
-#define NRF24_ACTIVATE_CE			CS_PORT |= (1<<CE);
+#define NRF_CS_DDR DDRD
+#define NRF_CS_PORT PORTD
+#define NRF_CSN PD7
+#define NRF_CE PD6
+#define NRF24_UNSELECT				NRF_CS_PORT |= (1<<NRF_CSN);
+#define NRF24_SELECT				NRF_CS_PORT &= ~(1<<NRF_CSN);
+#define NRF24_DEACTIVATE_CE			NRF_CS_PORT &= ~(1<<NRF_CE);
+#define NRF24_ACTIVATE_CE			NRF_CS_PORT |= (1<<NRF_CE);
 #define NRF24_IRQ					INTF1 //Wenn INT1 benutzt wird INTF1, wenn INT0 benutzt wird INTF0
 
 #define NRF_CHANNEL 0x64
+#define NRF_BUFFER_SIZE 50
 #define NRF_PAYLOAD_LEN 32
 #define NRF_ADDR_LEN 5
 
@@ -33,35 +35,30 @@
 #define TX_FAILED 4
 
 
-#define SET_RX_REQUEST NRF_Command |= (1 << RX_REQUEST);
-#define SET_TX_REQUEST NRF_Command |= (1 << TX_REQUEST);
-#define SET_RX_COMPLETE NRF_Command |= (1 << RX_COMPLETE);
-#define SET_TX_COMPLETE NRF_Command |= (1 << TX_COMPLETE);
-#define SET_TX_FAILED NRF_Command |= (1 << TX_FAILED);
-#define RESET_RX_REQUEST NRF_Command &= ~(1 << RX_REQUEST);
-#define RESET_TX_REQUEST NRF_Command &= ~(1 << TX_REQUEST);
-#define RESET_RX_COMPLETE NRF_Command &= ~(1 << RX_COMPLETE);
-#define RESET_TX_COMPLETE NRF_Command &= ~(1 << TX_COMPLETE);
-#define RESET_TX_FAILED NRF_Command &= ~(1 << TX_FAILED);
+#define SET_RX_REQUEST nrf_command |= (1 << RX_REQUEST);
+#define SET_TX_REQUEST nrf_command |= (1 << TX_REQUEST);
+#define SET_RX_COMPLETE nrf_command |= (1 << RX_COMPLETE);
+#define SET_TX_COMPLETE nrf_command |= (1 << TX_COMPLETE);
+#define SET_TX_FAILED nrf_command |= (1 << TX_FAILED);
+#define RESET_RX_REQUEST nrf_command &= ~(1 << RX_REQUEST);
+#define RESET_TX_REQUEST nrf_command &= ~(1 << TX_REQUEST);
+#define RESET_RX_COMPLETE nrf_command &= ~(1 << RX_COMPLETE);
+#define RESET_TX_COMPLETE nrf_command &= ~(1 << TX_COMPLETE);
+#define RESET_TX_FAILED nrf_command &= ~(1 << TX_FAILED);
 
-#define RX_REQUEST_IS_SET NRF_Command & (1 << RX_REQUEST)
-#define RX_REQUEST_IS_CLEAR !(NRF_Command & (1 << RX_REQUEST))
-#define TX_REQUEST_IS_SET NRF_Command & (1 << TX_REQUEST)
-#define TX_REQUEST_IS_CLEAR !(NRF_Command & (1 << TX_REQUEST))
-#define RX_COMPLETE_IS_SET NRF_Command & (1 << RX_COMPLETE)
-#define RX_COMPLETE_IS_CLEAR !(NRF_Command & (1 << RX_COMPLETE))
-#define TX_COMPLETE_IS_SET NRF_Command & (1 << TX_COMPLETE)
-#define TX_COMPLETE_IS_CLEAR !(NRF_Command & (1 << TX_COMPLETE))
-#define TX_FAILED_IS_SET NRF_Command & (1 << TX_FAILED)
-#define TX_FAILED_IS_CLEAR !(NRF_Command & (1 << TX_FAILED)
+#define RX_REQUEST_IS_SET nrf_command & (1 << RX_REQUEST)
+#define RX_REQUEST_IS_CLEAR !(nrf_command & (1 << RX_REQUEST))
+#define TX_REQUEST_IS_SET nrf_command & (1 << TX_REQUEST)
+#define TX_REQUEST_IS_CLEAR !(nrf_command & (1 << TX_REQUEST))
+#define RX_COMPLETE_IS_SET nrf_command & (1 << RX_COMPLETE)
+#define RX_COMPLETE_IS_CLEAR !(nrf_command & (1 << RX_COMPLETE))
+#define TX_COMPLETE_IS_SET nrf_command & (1 << TX_COMPLETE)
+#define TX_COMPLETE_IS_CLEAR !(nrf_command & (1 << TX_COMPLETE))
+#define TX_FAILED_IS_SET nrf_command & (1 << TX_FAILED)
+#define TX_FAILED_IS_CLEAR !(nrf_command & (1 << TX_FAILED)
 
 enum {idle=1, setup_rx, wait_on_rx, collecting_data, setup_tx, wait_on_tx, tx_failed, tx_complete};
-extern uint8_t NRF_Command;
-typedef struct
-{
-	uint8_t adress;
-	uint8_t Buffer[32];
-}dataframe;
+extern uint8_t nrf_command;
 //--------------------------------------------------------------------------------
 //Prototypes:
 //--------------------------------------------------------------------------------
