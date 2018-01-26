@@ -5,7 +5,6 @@
 //--------------------------------------------------------------------------------
 uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length) 
 {
-	length -= 1;
 	//*******************************************
 	if(cb->read_index == cb->write_index)			//Buffer is empty
 	{
@@ -98,7 +97,7 @@ uint8_t cb_pop(circular_buffer *cb, uint8_t *data, uint8_t length)
 	}
 	else
 	{
-		while((cb->read_index != cb->write_index) && (i<(length-1))) 
+		while((cb->read_index != cb->write_index) && (i<(length))) 
 		{
 			if(cb->buffer[cb->read_index]!=0) 
 			{	
@@ -115,7 +114,6 @@ uint8_t cb_pop(circular_buffer *cb, uint8_t *data, uint8_t length)
 			i++;
 		}	
 	}
-	data[i]=0;
 return i;
 }
 
