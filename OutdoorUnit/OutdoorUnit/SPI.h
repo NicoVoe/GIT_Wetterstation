@@ -11,10 +11,8 @@
 #define DD_SS       PB2
 #define DD_SCK      PB5
 
-#define buffer_size 20
-
-void SPI_Init(void);
-uint8_t SPI_SendByte (uint8_t data);
+void spi_init(void);
+uint8_t spi_send_byte (uint8_t data);
 void spi_transfer_sync (uint8_t * dataout, uint8_t * datain, uint8_t len);
 void spi_transmit_sync (uint8_t * dataout, uint8_t len);
 

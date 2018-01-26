@@ -108,6 +108,12 @@
     <Compile Include="DCF77.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="EEPROM.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EEPROM.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="NRF24L01.c">
       <SubType>compile</SubType>
     </Compile>

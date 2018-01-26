@@ -11,7 +11,7 @@ typedef struct
 	uint8_t size;
 }circular_buffer;
 
-uint8_t cb_push(circular_buffer *cb, char *data, uint8_t length);
+uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length);
 uint8_t cb_pop(circular_buffer *cb, uint8_t *data, uint8_t length);
 uint8_t cb_is_empty(circular_buffer *cb);
 

@@ -28,7 +28,7 @@ void nrf_init()										//Interrupt und Chipselect init
 	nrf_config();
 }
 
-void nrf_send(char* string, uint8_t length) 
+void nrf_send(uint8_t* string, uint8_t length) 
 {
 	cb_push(&nrf_cb, string, length);
 }
@@ -58,7 +58,7 @@ uint8_t nrf_get_status(void)
 {
 	uint8_t status=0;
 	NRF24_SELECT
-	status = SPI_SendByte(NOP);
+	status = spi_send_byte(NOP);
 	NRF24_UNSELECT
 	return(status);
 }
@@ -93,7 +93,7 @@ void nrf_powerup_tx(void)
 void nrf_powerup_rx(void)
 {
 	NRF24_SELECT
-	SPI_SendByte(FLUSH_RX);		//RX FIFO leeren
+	spi_send_byte(FLUSH_RX);		//RX FIFO leeren
 	NRF24_UNSELECT
 	
 	nrf_allocate_register(STATUS,((1<<RX_DR)|(1<<TX_DS)|(1<<MAX_RT)));						//alle Interrupts zu Beginn löschen
@@ -108,7 +108,7 @@ void nrf_send_data(uint8_t *Tx_Buffer)
 	_delay_us(10);
 	nrf_powerup_tx();
 	NRF24_SELECT
-	SPI_SendByte(W_TX_PAYLOAD);
+	spi_send_byte(W_TX_PAYLOAD);
 	nrf_transmit(Tx_Buffer, NRF_PAYLOAD_LEN);
 	NRF24_UNSELECT
 	NRF24_ACTIVATE_CE
@@ -117,7 +117,7 @@ void nrf_send_data(uint8_t *Tx_Buffer)
 void nrf_get_data(uint8_t *Rx_Buffer)
 {
 	NRF24_SELECT
-	SPI_SendByte(R_RX_PAYLOAD);
+	spi_send_byte(R_RX_PAYLOAD);
 	nrf_transfer_sync(Rx_Buffer, Rx_Buffer, NRF_PAYLOAD_LEN);
 	NRF24_UNSELECT
 	nrf_allocate_register(STATUS, (1<<RX_DR));	//Empfangsinterrut loeschen
@@ -130,23 +130,23 @@ void nrf_transmit(uint8_t *Buffer_Out, uint8_t Length)		//mehrere bytes in eine 
 {
 	for(uint8_t i=0; i<Length; i++)
 	{
-		SPI_SendByte(Buffer_Out[i]);
+		spi_send_byte(Buffer_Out[i]);
 	}
 }
 void nrf_transfer_sync(uint8_t *Buffer_Out, uint8_t *Buffer_In, uint8_t Length)			//mehrere bytes in eine Registeradresse schreiben und die antwort auslesen
 {
 	for(uint8_t i=0; i<Length; i++)
 	{
-		Buffer_In[i]=SPI_SendByte(Buffer_Out[i]);
+		Buffer_In[i]=spi_send_byte(Buffer_Out[i]);
 	}
 }
 
 void nrf_allocate_register(uint8_t Reg_Addr, uint8_t Val)
 {
 	NRF24_SELECT
-	SPI_SendByte(W_REGISTER | (REGISTER_MASK & Reg_Addr));
+	spi_send_byte(W_REGISTER | (REGISTER_MASK & Reg_Addr));
 	_delay_us(10);
-	SPI_SendByte(Val);
+	spi_send_byte(Val);
 	NRF24_UNSELECT
 	_delay_us(10);
 }
@@ -154,7 +154,7 @@ void nrf_allocate_register(uint8_t Reg_Addr, uint8_t Val)
 void nrf_write_register(uint8_t Reg_Addr, uint8_t *Tx_Buffer, uint8_t Length)
 {
 	NRF24_SELECT											//Chip Select
-	SPI_SendByte(W_REGISTER | (REGISTER_MASK & Reg_Addr));	//Schreibbefehl + Registeradresse
+	spi_send_byte(W_REGISTER | (REGISTER_MASK & Reg_Addr));	//Schreibbefehl + Registeradresse
 	nrf_transmit(Tx_Buffer, Length);
 	NRF24_UNSELECT
 	_delay_us(10);
@@ -163,7 +163,7 @@ void nrf_write_register(uint8_t Reg_Addr, uint8_t *Tx_Buffer, uint8_t Length)
 void nrf_read_register(uint8_t Reg_Addr, uint8_t *TxRx_Buffer, uint8_t Length)
 {
 	NRF24_SELECT											
-	SPI_SendByte(R_REGISTER | (REGISTER_MASK & Reg_Addr));	//Lesebefehl + Registeradresse
+	spi_send_byte(R_REGISTER | (REGISTER_MASK & Reg_Addr));	//Lesebefehl + Registeradresse
 	nrf_transfer_sync(TxRx_Buffer, TxRx_Buffer, Length);
 	NRF24_UNSELECT
 	_delay_us(10);

@@ -18,13 +18,13 @@
 #define DCF_FIRST_PULSE			1850
 #define DCF_MARGIN_FIRST_PULSE	150
 
-#define INT0_NEGATIVE_EDGE	MCUCR |= (1 << ISC01); MCUCR &= ~(1 << ISC00);
-#define INT0_POSITIVE_EDGE	MCUCR |= (1 << ISC00) | (1 << ISC01);
-#define CLEAR_INT0			GIFR |= (1 << INTF0); 
-#define DCF_INTF0_IS_SET	GIFR & (1 << INTF0)
-#define DCF_INTF0_IS_CLEAR	!(GIFR & (1 << INTF0))
+#define DCF_INT0_NEGATIVE_EDGE	MCUCR |= (1 << ISC01); MCUCR &= ~(1 << ISC00);
+#define DCF_INT0_POSITIVE_EDGE	MCUCR |= (1 << ISC00) | (1 << ISC01);
+#define DCF_CLEAR_INT0			GIFR |= (1 << INTF0); 
+#define DCF_INTF0_IS_SET		GIFR & (1 << INTF0)
+#define DCF_INTF0_IS_CLEAR		!(GIFR & (1 << INTF0))
 
-#define STOPWATCH_RESET		dcf_stoptime_counter = 0xFFFF;
+#define DCF_STOPWATCH_RESET		dcf_stoptime_counter = 0xFFFF;
 
 void dcf_state_machine (void);
 void dcf_idle (void);
@@ -48,8 +48,8 @@ uint8_t power (uint8_t basis, uint8_t exponent);
 
 typedef struct
 {
-	volatile uint8_t Bit_Number, Parity, State;
-	volatile uint8_t RawData[6];
+	volatile uint8_t bit_number, parity, state;
+	volatile uint8_t raw_data[6];
 }DCF_Data;
 
 typedef struct
@@ -59,6 +59,6 @@ typedef struct
 	char weekday[11];
 }Time_Data;
 
-enum {idle_dcf=1, setup_dcf, search_for_start, wait_for_next_bit, wait_for_next_pause, measure_pulse_width, one_detected, zero_detected, minute_eval, hour_eval, day_eval, month_eval, weekday_eval, year_eval};
+enum {dcf_state_idle=1, dcf_state_setup, dcf_state_search_for_start, dcf_state_wait_for_next_bit, dcf_state_wait_for_next_pause, dcf_state_measure_pulse_width, dcf_state_one_detected, dcf_state_zero_detected, dcf_state_minute_eval, dcf_state_hour_eval, dcf_state_day_eval, dcf_state_month_eval, dcf_state_weekday_eval, dcf_state_year_eval};
 	
 #endif

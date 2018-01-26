@@ -1,6 +1,6 @@
 #include "SPI.h"
 
-void SPI_Init()
+void spi_init()
 {
 	DDR_SPI &= ~((1<<DD_MOSI)|(1<<DD_MISO)|(1<<DD_SS)|(1<<DD_SCK));
 	// Define the following pins as output
@@ -15,7 +15,7 @@ void SPI_Init()
 	(0<<CPHA));             // Clock Phase (0:leading / 1:trailing edge sampling)
 }
 
-uint8_t SPI_SendByte (uint8_t data) 
+uint8_t spi_send_byte (uint8_t data) 
 {
 	SPDR = data;
 	while((SPSR & (1<<SPIF))==0);

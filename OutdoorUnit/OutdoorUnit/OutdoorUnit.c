@@ -10,6 +10,7 @@
 #include "system_time.h"
 #include "DCF77.h"
 #include "OneWire.h"
+#include "EEPROM.h"
 
 
 #define DEBUG_LED_DDR DDRB
@@ -29,7 +30,7 @@ int main(void)
 {
     DDRB |= (1<<PB2);
 	
-	SPI_Init();
+	spi_init();
 	nrf_init();
 	system_time_init();
 	ow_init();
@@ -44,8 +45,9 @@ int main(void)
 	//uint64_t ID = 0xD204165168A5FF28;	//{0xD2}{0x04}{0x16}{0x51}{0x68}{0xA5}{0xFF}{0x28} Flach
 	uint64_t ID2= 0x7F0416A04081FF28;	//{0x7F}{0x04}{0x16}{0xA0}{0x40}{0x81}{0xFF}{0x28} rund
 	uint64_t ID =	0xCF031661B4DDFF28;	//{0xCF}{0x03}{0x16}{0x61}{0xB4}{0xDD}{0xFF}{0x28} meins
+	char temp_string[10] = {0};
 	
-	nrf_send("OutdoorModule>> Begin:\n", sizeof("OutdoorModule>> Begin:\n"));
+	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	
 	ow_start();
 	
@@ -71,7 +73,10 @@ int main(void)
 		
 		if(achieved_time(1000 ,&debug_delay)) 
 		{
-			DEBUG_LED_PORT ^= 1 << DEBUG_LED;		
+			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
+			itoa(ow_temp, temp_string, 10);
+			nrf_send(temp_string,5);
+			nrf_send("--",3);		
 			
 			/*uint64_t ID = ow_read_rom();
 			for(int i=0; i<8; i++) 
