@@ -99,18 +99,12 @@ uint8_t cb_pop(circular_buffer *cb, uint8_t *data, uint8_t length)
 	{
 		while((cb->read_index != cb->write_index) && (i<(length))) 
 		{
-			if(cb->buffer[cb->read_index]!=0) 
+			if(cb->read_index > (cb->size-1)) 
 			{	
-				data[i]=cb->buffer[cb->read_index];
-			}
-			if(cb->read_index >= (cb->size-1)) 
-			{
 				cb->read_index=0;
 			}
-			else
-			{
-				cb->read_index++;
-			}
+			data[i]=cb->buffer[cb->read_index];	
+			cb->read_index++;
 			i++;
 		}	
 	}

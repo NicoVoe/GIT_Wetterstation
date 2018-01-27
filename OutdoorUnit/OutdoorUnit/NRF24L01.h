@@ -13,6 +13,11 @@
 //--------------------------------------------------------------------------------
 //:
 //--------------------------------------------------------------------------------
+
+#define DEBUG_LED_DDR DDRB
+#define DEBUG_LED_PORT PORTB
+#define DEBUG_LED PB2
+
 #define NRF_CS_DDR DDRD
 #define NRF_CS_PORT PORTD
 #define NRF_CSN PD7
@@ -24,7 +29,7 @@
 #define NRF24_IRQ					INTF1 //Wenn INT1 benutzt wird INTF1, wenn INT0 benutzt wird INTF0
 
 #define NRF_CHANNEL 0x64
-#define NRF_BUFFER_SIZE 50
+#define NRF_BUFFER_SIZE 30
 #define NRF_PAYLOAD_LEN 32
 #define NRF_ADDR_LEN 5
 

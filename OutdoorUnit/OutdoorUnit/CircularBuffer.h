@@ -3,6 +3,10 @@
 
 #include <avr/io.h>
 
+#define DEBUG_LED_DDR DDRB
+#define DEBUG_LED_PORT PORTB
+#define DEBUG_LED PB2
+
 typedef struct
 {
 	uint8_t *buffer;

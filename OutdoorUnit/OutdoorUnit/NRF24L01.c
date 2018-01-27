@@ -112,7 +112,7 @@ void nrf_send_data(uint8_t *Tx_Buffer)
 	nrf_transmit(Tx_Buffer, NRF_PAYLOAD_LEN);
 	NRF24_UNSELECT
 	NRF24_ACTIVATE_CE
-
+	
 }
 void nrf_get_data(uint8_t *Rx_Buffer)
 {
@@ -201,6 +201,7 @@ void nrf_idle (void)
 	{
 		nrf_state = setup_tx;
 	}
+
 }
 
 void nrf_setup_rx (void)
@@ -282,8 +283,13 @@ void nrf_wait_on_tx(void)
 void nrf_tx_complete (void)
 {
 	nrf_allocate_register(STATUS,(1 << TX_DS));
-	if(!cb_is_empty(&nrf_cb)) {
+	if(cb_is_empty(&nrf_cb)) 
+	{
 		nrf_state = idle;	
+	}
+	else
+	{
+		nrf_state = setup_tx;
 	}
 	SET_TX_COMPLETE
 	RESET_TX_REQUEST
