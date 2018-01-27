@@ -14,10 +14,6 @@
 //:
 //--------------------------------------------------------------------------------
 
-#define DEBUG_LED_DDR DDRB
-#define DEBUG_LED_PORT PORTB
-#define DEBUG_LED PB2
-
 #define NRF_CS_DDR DDRD
 #define NRF_CS_PORT PORTD
 #define NRF_CSN PD7

@@ -104,7 +104,7 @@ void eeprom_write ()
 	CLEAR_EEPROM_CS
 	_delay_us(100);
 	SET_EEPROM_CS
-	spi_send_byte(EEPROM_WRITE);									// write instruction
+	spi_send_byte(EEPROM_WRITE);								// write instruction
 	for (uint8_t i = 3; i>0; i--)
 	{
 		spi_send_byte(eeprom_data.adress[i-1]);					// 24bit adress with 7 don't care MSB's

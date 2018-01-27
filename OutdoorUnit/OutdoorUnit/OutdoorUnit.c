@@ -48,7 +48,7 @@ int main(void)
 	uint64_t ID =	0xCF031661B4DDFF28;	//{0xCF}{0x03}{0x16}{0x61}{0xB4}{0xDD}{0xFF}{0x28} meins
 	char temp_string[10] = {0};
 	uint8_t k = 0, length=0;
-	//nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
+	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	DEBUG_LED_PORT |= 1 << DEBUG_LED;
 	ow_start();
 	
@@ -74,7 +74,7 @@ int main(void)
 		
 		if(achieved_time(500 ,&debug_delay)) 
 		{
-			//DEBUG_LED_PORT ^= 1 << DEBUG_LED;
+			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
 			k++;
 			itoa(k, temp_string, 10);
 			length = 0;
