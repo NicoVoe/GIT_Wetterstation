@@ -25,7 +25,7 @@
 #define NRF24_IRQ					INTF1 //Wenn INT1 benutzt wird INTF1, wenn INT0 benutzt wird INTF0
 
 #define NRF_CHANNEL 0x64
-#define NRF_BUFFER_SIZE 30
+#define NRF_BUFFER_SIZE 50
 #define NRF_PAYLOAD_LEN 32
 #define NRF_ADDR_LEN 5
 
@@ -88,6 +88,7 @@ void nrf_setup_tx (void);
 void nrf_wait_on_tx(void);
 void nrf_tx_complete (void);
 void nrf_tx_failed (void);
+void nrf_send(uint8_t* string, uint16_t length);
 
 
 //Memory Map - address defines

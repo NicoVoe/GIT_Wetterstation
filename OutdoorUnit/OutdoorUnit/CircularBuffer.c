@@ -3,7 +3,7 @@
 //--------------------------------------------------------------------------------
 //Circular Buffer Functions:
 //--------------------------------------------------------------------------------
-uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length) 
+uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint16_t length) 
 {
 	//*******************************************
 	if(cb->read_index == cb->write_index)			//Buffer is empty
@@ -14,7 +14,7 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length)
 		}
 		else
 		{
-			for(uint8_t i=0; i<length; i++) 
+			for(uint16_t i=0; i<length; i++) 
 			{
 				if(cb->write_index >= cb->size)	//Check for Buffer end
 				{
@@ -33,7 +33,7 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length)
 	//*******************************************
 	else if(cb->write_index > cb->read_index)
 	{
-		uint8_t left_space = 0;
+		uint16_t left_space = 0;
 		if (cb->read_index == 0) 
 		{
 			left_space = cb->size - cb->write_index - 1;
@@ -49,7 +49,7 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length)
 		}
 		else
 		{
-			for (int i=0; i<length; i++)
+			for (uint16_t i=0; i<length; i++)
 			{
 				if(cb->write_index >= cb->size)	//Check for Buffer end
 				{
@@ -68,14 +68,14 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length)
 	//*******************************************
 	else if(cb->write_index < cb->read_index)
 	{
-		uint8_t left_space = cb->read_index - cb->write_index -1;
+		uint16_t left_space = cb->read_index - cb->write_index -1;
 		if(length > left_space) 
 		{
 			return 0;			//not enough free space in buffer
 		}
 		else
 		{
-			for (int i=0; i<length; i++)
+			for (uint16_t i=0; i<length; i++)
 			{
 				 cb->buffer[cb->write_index] = data[i];
 				 cb->write_index++;
@@ -87,9 +87,9 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint8_t length)
 return 0;
 }		
 
-uint8_t cb_pop(circular_buffer *cb, uint8_t *data, uint8_t length) 
+uint16_t cb_pop(circular_buffer *cb, uint8_t *data, uint16_t length) 
 {
-	uint8_t i=0;
+	uint16_t i=0;
 	
 	if(cb->read_index == cb->write_index) 
 	{
@@ -114,4 +114,23 @@ return i;
 uint8_t cb_is_empty(circular_buffer *cb)
 {
 	return (cb->read_index == cb->write_index); 
+}
+
+uint8_t cb_is_full(circular_buffer *cb)
+{
+	if (cb->write_index == (cb->size-1)) 
+	{
+		if (cb->read_index == 0) 
+		{
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		return(cb->read_index == (cb->write_index+1));
+	}
 }

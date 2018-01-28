@@ -3,13 +3,14 @@
 
 uint8_t nrf_state = idle;
 uint8_t nrf_command = 0;
-uint8_t nrf_receive_buffer[32] = {0};
 	
 const uint8_t NRF_TX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
 const uint8_t NRF_RX_ADRESS[5] = {0xD7, 0xD7, 0xD7, 0xD7, 0xD7};
 
-uint8_t nrf_send_buffer[NRF_BUFFER_SIZE]={0};
-circular_buffer nrf_cb={nrf_send_buffer,0,0,NRF_BUFFER_SIZE};
+uint8_t nrf_send_buffer[NRF_BUFFER_SIZE] = {0};
+circular_buffer nrf_tx_cb = {nrf_send_buffer,0,0,NRF_BUFFER_SIZE};
+uint8_t nrf_receive_buffer[NRF_PAYLOAD_LEN] = {0};
+circular_buffer nrf_rx_cb = {nrf_receive_buffer,0,0,NRF_PAYLOAD_LEN};
 	
 //--------------------------------------------------------------------------------
 //Funktionen fuer die Ablaufsteuerung des Funkmoduls
@@ -28,9 +29,9 @@ void nrf_init()										//Interrupt und Chipselect init
 	nrf_config();
 }
 
-void nrf_send(uint8_t* string, uint8_t length) 
+void nrf_send(uint8_t* string, uint16_t length) 
 {
-	cb_push(&nrf_cb, string, length);
+	cb_push(&nrf_tx_cb, string, length);
 }
 
 void nrf_config()										//Funkmodul init
@@ -197,7 +198,7 @@ void nrf_idle (void)
 	{
 		nrf_state = setup_rx;
 	}
-	if (!cb_is_empty(&nrf_cb))
+	if (!cb_is_empty(&nrf_tx_cb))
 	{
 		nrf_state = setup_tx;
 	}
@@ -230,7 +231,7 @@ void nrf_wait_on_rx (void)
 		{
 			nrf_state = idle;
 		}
-		if (!cb_is_empty(&nrf_cb))
+		if (!cb_is_empty(&nrf_tx_cb))
 		{
 			nrf_state = setup_tx;
 		}
@@ -254,7 +255,7 @@ void nrf_setup_tx (void)
 {
 	uint8_t send_data[33] = {0};
 	nrf_set_tx_adress(NRF_TX_ADRESS);
-	if(cb_pop(&nrf_cb, send_data, 33)) 
+	if(cb_pop(&nrf_tx_cb, send_data, 33)) 
 	{	
 		nrf_send_data(send_data);
 	}
@@ -283,7 +284,7 @@ void nrf_wait_on_tx(void)
 void nrf_tx_complete (void)
 {
 	nrf_allocate_register(STATUS,(1 << TX_DS));
-	if(cb_is_empty(&nrf_cb)) 
+	if(cb_is_empty(&nrf_tx_cb)) 
 	{
 		nrf_state = idle;	
 	}

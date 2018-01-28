@@ -18,6 +18,9 @@
 #define DEBUG_LED_PORT PORTB
 #define DEBUG_LED PB2
 uint16_t Debug_Delay = 0xFFFF;
+uint16_t delay_eeprom = 0xFFFF;
+
+#define vollidiot 10
 
 void send_date(void);
 void send_nrf_string(char *s);
@@ -26,66 +29,104 @@ uint16_t debug_delay=0xFFFF;
 extern uint8_t dcf_request, dcf_ready;
 extern Time_Data time;
 extern int16_t ow_temp, ow_temp2; 
+extern circular_buffer eeprom_cb;
 
 int main(void) 
 {
     DDRB |= (1<<PB2);
+	DDRC |= (1<<PC3);
 	
 	spi_init();
 	nrf_init();
 	system_time_init();
 	ow_init();
+	eeprom_init();
 	sei();
-	_delay_ms(2000);
+	_delay_ms(1000);
 
 	dcf_request = 1;
 	char string[32] = {0};
-	char tmp[10] = {0};
-	double temp = 0.0;
-	double temp2 = 0.0;
+	unsigned char tmp[10] = {0};
 	//uint64_t ID = 0xD204165168A5FF28;	//{0xD2}{0x04}{0x16}{0x51}{0x68}{0xA5}{0xFF}{0x28} Flach
 	//uint64_t ID2= 0x7F0416A04081FF28;	//{0x7F}{0x04}{0x16}{0xA0}{0x40}{0x81}{0xFF}{0x28} rund
 	uint64_t ID =	0xCF031661B4DDFF28;	//{0xCF}{0x03}{0x16}{0x61}{0xB4}{0xDD}{0xFF}{0x28} meins
 	char temp_string[10] = {0};
 	uint8_t k = 0, length=0;
 	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
-	DEBUG_LED_PORT |= 1 << DEBUG_LED;
 	ow_start();
+	//eeprom_put_data(eeprom_test_string, vollidiot);
+	
+	/*
+	for(uint16_t i =0; i<256; i++) 
+	{
+		cb_push(&eeprom_cb, &i, 1);
+	}
+	*/
+	
+	eeprom_start_reading();
 	
 	while(1) 
 	{
 		
 		nrf_state_machine();
-		dcf_state_machine();
-		ow_state_machine();
-		
+		//dcf_state_machine();
+		//ow_state_machine();
+		eeprom_state_machine();
+		/*
 		if(ow_state_machine())
 		{
 			ow_get_temp(ID);		
 			OW_CLEAR_CONV_COMPLETE
 		}
+		*/
 		
-		
-		if (dcf_ready) 
+		/*if (dcf_ready) 
 		{
 			send_date();
 			dcf_ready = 0;
-		}
+		}*/
 		
-		if(achieved_time(500 ,&debug_delay)) 
+		if(achieved_time(20 ,&debug_delay)) 
 		{
 			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
-			k++;
-			itoa(k, temp_string, 10);
-			length = 0;
-			while(temp_string[length]!=0)
+		 
+			/*if (cb_is_full(&eeprom_cb)) 
 			{
+				PORTC ^= 1<< PC3;
+				k++;
+				itoa(k, temp_string, 10);
+				length = 0;
+				while(temp_string[length]!=0)
+				{
+					length++;
+				}
+				
+				temp_string[length]= '-';
 				length++;
+				nrf_send(temp_string, length);
 			}
+			*/
 			
-			temp_string[length]= '-';
-			length++;
-			nrf_send(temp_string, length);
+			
+	
+		
+			
+		if (eeprom_get_data(&k, 1)) 
+		{
+						itoa(k, tmp, 10);
+						length = 0;
+						while(tmp[length]!=0)
+						{
+							if(length >= 10 )
+							{
+								break;
+							}
+							length++;
+						}
+						tmp[length]= '-';
+						length++;
+						nrf_send(tmp, length);	
+		}	
 			//itoa(ow_temp, temp_string, 10);
 			//nrf_send(temp_string,5);
 			//nrf_send("--",3);		
@@ -122,7 +163,7 @@ int main(void)
 			string[15] = '\n';
 			string[16] = 0;
 			*/
-			ow_start();
+			//ow_start();
 		}
     }
 }
