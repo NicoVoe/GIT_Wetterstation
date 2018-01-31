@@ -17,10 +17,6 @@
 #define DEBUG_LED_DDR DDRB
 #define DEBUG_LED_PORT PORTB
 #define DEBUG_LED PB2
-uint16_t Debug_Delay = 0xFFFF;
-uint16_t delay_eeprom = 0xFFFF;
-
-#define vollidiot 10
 
 void send_date(void);
 void send_nrf_string(char *s);
@@ -54,15 +50,10 @@ int main(void)
 	uint8_t k = 0, length=0;
 	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	ow_start();
-	//eeprom_put_data(eeprom_test_string, vollidiot);
-	
-	/*
-	for(uint16_t i =0; i<256; i++) 
+	/*for(uint16_t i=256; i>0; i--) 
 	{
 		cb_push(&eeprom_cb, &i, 1);
-	}
-	*/
-	
+	}*/
 	eeprom_start_reading();
 	
 	while(1) 
@@ -86,15 +77,14 @@ int main(void)
 			dcf_ready = 0;
 		}*/
 		
-		if(achieved_time(20 ,&debug_delay)) 
+		if(achieved_time(5 ,&debug_delay)) 
 		{
 			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
-		 
 			/*if (cb_is_full(&eeprom_cb)) 
 			{
 				PORTC ^= 1<< PC3;
 				k++;
-				itoa(k, temp_string, 10);
+				itoa(eeprom_cb.buffer[k], temp_string, 10);
 				length = 0;
 				while(temp_string[length]!=0)
 				{
@@ -104,8 +94,8 @@ int main(void)
 				temp_string[length]= '-';
 				length++;
 				nrf_send(temp_string, length);
-			}
-			*/
+			}*/
+			
 			
 			
 	

@@ -16,10 +16,11 @@
 #include <util/delay.h>
 #include "SPI.h"
 #include "CircularBuffer.h"
+#include "system_time.h"
 
 #define EEPROM_DDR		DDRB
 #define EEPROM_PORT		PORTB
-#define EEPROM_CS		PB0
+#define EEPROM_CS		PB1
 
 #define EEPROM_BUFFER_SIZE		257
 #define SET_EEPROM_CS			EEPROM_PORT &= ~(1 << EEPROM_CS);
@@ -41,11 +42,12 @@ static void eeprom_idle (void);
 static void eeprom_read_page (void);
 static void eeprom_wait_for_collecting_data(void);
 static void eeprom_write_page (void);
+static void eeprom_write_cycle(void);
 static void eeprom_erase_page (void);
 static uint8_t eeprom_status (void);
 static void eeprom_write_adress(uint32_t adresss);
-static uint8_t eeprom_write_pointer(uint32_t adress, uint8_t *data, uint16_t length);
-static uint8_t eeprom_read_pointer(uint32_t adress, uint8_t *data, uint16_t length);
+static uint8_t eeprom_write_pointer(uint32_t adress, uint32_t pointer, uint16_t length);
+static uint8_t eeprom_read_pointer(uint32_t adress, uint32_t pointer, uint16_t length);
 
 
 //--------------------------------------------------------------------------------
@@ -58,7 +60,7 @@ typedef struct
 }EEPROM_Dataframe;
 
 
-enum {eeprom_state_idle = 1, eeprom_state_read, eeprom_state_wait_for_collecting_data, eeprom_state_write, eeprom_state_erase};
+enum {eeprom_state_idle = 1, eeprom_state_read, eeprom_state_wait_for_collecting_data, eeprom_state_write, eeprom_state_write_cycle, eeprom_state_erase};
 enum {read_rq=1, write_rq};
 
 
