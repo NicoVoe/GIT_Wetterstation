@@ -54,7 +54,7 @@ int main(void)
 	{
 		cb_push(&eeprom_cb, &i, 1);
 	}*/
-	eeprom_start_reading();
+	eeprom_start_reading(2);
 	
 	while(1) 
 	{
