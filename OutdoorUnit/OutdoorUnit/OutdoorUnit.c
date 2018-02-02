@@ -30,8 +30,9 @@ extern circular_buffer eeprom_cb;
 int main(void) 
 {
     DDRB |= (1<<PB2);
+	PORTB &=~(1<<PB2);
 	DDRC |= (1<<PC3);
-	
+
 	spi_init();
 	nrf_init();
 	system_time_init();
@@ -50,12 +51,12 @@ int main(void)
 	uint8_t k = 0, length=0;
 	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	ow_start();
-	/*for(uint16_t i=256; i>0; i--) 
+	/*	for(uint16_t i=256; i>0; i--) 
 	{
 		cb_push(&eeprom_cb, &i, 1);
 	}*/
-	eeprom_start_reading(2);
-	
+	eeprom_start_reading(1);
+
 	while(1) 
 	{
 		
@@ -79,7 +80,8 @@ int main(void)
 		
 		if(achieved_time(5 ,&debug_delay)) 
 		{
-			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
+			//nrf_send("ich lebe noch :)...", sizeof("ich lebe noch :)..."));
+			//DEBUG_LED_PORT ^= 1 << DEBUG_LED;
 			/*if (cb_is_full(&eeprom_cb)) 
 			{
 				PORTC ^= 1<< PC3;
@@ -157,18 +159,6 @@ int main(void)
 		}
     }
 }
-
-void send_nrf_string(char *s) 
-{
-	uint8_t i=0;
-	/*while(s[i]!=0) 
-	{
-		Tx_Data.Buffer[i] = s[i];
-		i++;
-	}
-	SET_TX_REQUEST*/
-}
-
 
 void send_date(void) 
 {

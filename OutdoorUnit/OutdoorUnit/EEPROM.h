@@ -22,9 +22,16 @@
 #define EEPROM_PORT				PORTB
 #define EEPROM_BUFFER_SIZE		257
 #define EEPROM_DDR_VALUE		((1<<PB0)|(1<<PB1))
+#define EEPROM_HEADER_ID		0x576574746572CAFE		//muss exakt 6 bytes lang sein  
+#define EEPROM_PAGE_SIZE		256					// in bytes
+#define EEPROM_END_ADRESS		0x1FFFF
+
+
+
+
+#define EEPROM_LAST_ADRESS		EEPROM_END_ADRESS-EEPROM_PAGE_SIZE
 #define EEPROM_WPOINTER_ADRESS	0x1FF00
 #define EEPROM_RPOINTER_ADRESS	0x1FF10
-
 #define SET_EEPROM_CS			EEPROM_PORT &= ~(1 << eeprom_current_cs);
 #define CLEAR_EEPROM_CS			EEPROM_PORT |= (1 << eeprom_current_cs);
 #define SET_EEPROM_REQUEST		eeprom_flag |= (1 << 0);
@@ -41,6 +48,7 @@ void eeprom_state_machine (void);
 uint8_t eeprom_get_data(uint8_t *eeprom_data, uint16_t eeprom_data_length);
 uint8_t eeprom_put_data(uint8_t *eeprom_data, uint16_t eeprom_data_length, uint8_t chip_select);
 uint8_t eeprom_start_reading(uint8_t chip_select);
+uint64_t eeprom_read_header(uint8_t chip_select);
 
 
 static void eeprom_idle (void);
@@ -55,6 +63,8 @@ static uint8_t eeprom_write_wpointer(uint32_t pointer_adress);
 static uint32_t eeprom_read_wpointer(void);
 static uint32_t eeprom_read_rpointer(void);
 static uint8_t eeprom_write_rpointer(uint32_t pointer_adress);
+void write_header(uint8_t chip_select, uint64_t header);
+uint64_t eeprom_read_header(uint8_t chip_select);
 
 
 //--------------------------------------------------------------------------------

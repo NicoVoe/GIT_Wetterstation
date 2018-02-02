@@ -1,3 +1,10 @@
+//*************************************************************************************************
+//		One Wire Library
+//
+//		date: 24.01.2018
+//*************************************************************************************************
+// Version 1.0
+
 #ifndef CIRCULARBUFFER_H_
 #define CIRCULARBUFFER_H_
 
@@ -16,5 +23,6 @@ uint8_t cb_push(circular_buffer *cb, uint8_t *data, uint16_t length);
 uint16_t cb_pop(circular_buffer *cb, uint8_t *data, uint16_t length);
 uint8_t cb_is_empty(circular_buffer *cb);
 uint8_t cb_is_full(circular_buffer *cb);
+void cb_delete(circular_buffer *cb);
 
 #endif /* CIRCULARBUFFER_H_ */
