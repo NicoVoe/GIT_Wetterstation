@@ -25,7 +25,7 @@
 #define EEPROM_HEADER_ID		0x576574746572CAFE		//muss exakt 6 bytes lang sein  
 #define EEPROM_PAGE_SIZE		256					// in bytes
 #define EEPROM_END_ADRESS		0x1FFFF
-
+#define EEPROM_WRITE_CYCLE_MS	10 
 
 
 
@@ -65,6 +65,10 @@ static uint32_t eeprom_read_rpointer(void);
 static uint8_t eeprom_write_rpointer(uint32_t pointer_adress);
 void write_header(uint8_t chip_select, uint64_t header);
 uint64_t eeprom_read_header(uint8_t chip_select);
+static void eeprom_refresh_rpointer(void);
+static void eeprom_wpointer_cycle(void);
+static void eeprom_refresh_wpointer(void);
+void read_irgendwas(uint32_t adress, uint8_t *data, uint16_t length);
 
 
 //--------------------------------------------------------------------------------
@@ -76,7 +80,7 @@ typedef struct
 	uint8_t *Buffer;
 }EEPROM_Dataframe;
 
-enum {eeprom_state_idle = 1, eeprom_state_read, eeprom_state_rpointer_cycle, eeprom_state_refresh_rpointer, eeprom_state_wait_for_collecting_data, eeprom_state_write, eeprom_state_write_cycle, eeprom_state_refresh_wpointer, eeprom_state_wpointer_cycle, eeprom_state_erase};
+enum {eeprom_state_idle = 1, eeprom_state_read, eeprom_state_refresh_rpointer, eeprom_state_wait_for_collecting_data, eeprom_state_write, eeprom_state_write_cycle, eeprom_state_refresh_wpointer, eeprom_state_wpointer_cycle, eeprom_state_erase};
 
 extern uint8_t eeprom_current_cs;
 extern uint8_t eeprom_flag;

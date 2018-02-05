@@ -25,16 +25,16 @@ void eeprom_init ()
 {
 	EEPROM_DDR |= EEPROM_DDR_VALUE;
 	EEPROM_PORT |= EEPROM_DDR_VALUE;
-	uint64_t test = eeprom_read_header(PB1);
-	if(test == EEPROM_HEADER_ID) 
-	{
-		PORTB |= (1<<PB2);
-		write_header(PB1, EEPROM_HEADER_ID);
+	uint64_t test = eeprom_read_header(PB0);
+	//if(test == EEPROM_HEADER_ID) 
+	//{
+		write_header(PB0, EEPROM_HEADER_ID);
+		_delay_ms(10);
 		eeprom_write_wpointer(0x00);
 		_delay_ms(10);
-		eeprom_write_rpointer(0x00);
+		eeprom_write_rpointer(0x01010101);
 		_delay_ms(10);
-	}
+	//}
 }
 //-------------------------------------------------------------------------------------------------
 //
@@ -47,15 +47,38 @@ uint8_t eeprom_start_reading(uint8_t chip_select)
 {
 	if(eeprom_state == eeprom_state_idle) 
 	{
-		eeprom_flag = 1;
-		eeprom_current_cs = chip_select;
-		return 1;
+		uint32_t wpointer = eeprom_read_wpointer();
+		uint32_t rpointer = eeprom_read_rpointer();
+		if(wpointer == rpointer)
+		{
+			return 2;
+		}
+		else
+		{
+			eeprom_flag = 1;
+			eeprom_current_cs = chip_select;
+			return 1;
+		}
 	}
 	else
 	{
 		return 0;
 	}
 }
+
+void read_irgendwas(uint32_t adress, uint8_t *data, uint16_t length)
+{
+	eeprom_current_cs = 0;
+	SET_EEPROM_CS
+	spi_send_byte(EEPROM_READ);								// read instruction
+	eeprom_write_adress(adress);
+	for(int i=0; i<length; i++)
+	{
+		data[i] = spi_send_byte(NOP);		// dummy byte
+	}
+	CLEAR_EEPROM_CS
+}
+
 //-------------------------------------------------------------------------------------------------
 //
 //-------------------------------------------------------------------------------------------------
@@ -112,8 +135,18 @@ uint8_t eeprom_put_data(uint8_t *eeprom_data, uint16_t eeprom_data_length, uint8
 {
 	if (eeprom_state == eeprom_state_idle)
 	{
-		eeprom_current_cs = chip_select;
-		return (cb_push(&eeprom_cb, eeprom_data, eeprom_data_length));
+		uint32_t wpointer = eeprom_read_wpointer();
+		uint32_t rpointer = eeprom_read_rpointer();
+		
+		if(((wpointer+1) == rpointer)||((rpointer==0)&&((wpointer+1)==EEPROM_LAST_ADRESS)))
+		{
+			return 2;
+		}
+		else
+		{
+			eeprom_current_cs = chip_select;
+			return (cb_push(&eeprom_cb, eeprom_data, eeprom_data_length));
+		}
 	}
 	else
 	{
@@ -123,21 +156,31 @@ uint8_t eeprom_put_data(uint8_t *eeprom_data, uint16_t eeprom_data_length, uint8
 
 static uint8_t eeprom_write_wpointer(uint32_t pointer_adress)
 {
+	SET_EEPROM_CS
+	spi_send_byte(EEPROM_WREN);									// write enable
+	CLEAR_EEPROM_CS
+	_delay_us(100);
+	SET_EEPROM_CS
+	spi_send_byte(EEPROM_WRITE);
 	eeprom_write_adress(EEPROM_WPOINTER_ADRESS);
 	for(uint8_t i = 0; i<4; i++)
 	{
-		spi_send_byte((pointer_adress>>(i*8)&0xFF));								// send Data via SPI
-	}		
+		spi_send_byte((pointer_adress>>(i*8)&0xFF));			// send Data via SPI
+	}	
+	CLEAR_EEPROM_CS	
 }
 
 static uint32_t eeprom_read_wpointer(void)
 {
+	SET_EEPROM_CS
+	spi_send_byte(EEPROM_READ);
 	eeprom_write_adress(EEPROM_WPOINTER_ADRESS);
 	uint32_t adress = 0;
 	for(uint8_t i = 0; i<4; i++)
 	{
 		adress |= (((spi_send_byte(NOP)<<(i*8))&0xFF));								// send Data via SPI
 	}
+	CLEAR_EEPROM_CS
 return adress;
 }
 
@@ -154,16 +197,20 @@ static uint8_t eeprom_write_rpointer(uint32_t pointer_adress)
 	{
 		spi_send_byte((pointer_adress>>(i*8)&0xFF));								// send Data via SPI
 	}
+	CLEAR_EEPROM_CS
 }
 
 static uint32_t eeprom_read_rpointer(void)
 {
+	SET_EEPROM_CS
+	spi_send_byte(EEPROM_READ);
 	eeprom_write_adress(EEPROM_RPOINTER_ADRESS);
 	uint32_t adress = 0;
 	for(uint8_t i = 0; i<4; i++)
 	{
 		adress |= (((spi_send_byte(NOP)<<(i*8))&0xFF));								// send Data via SPI
 	}
+	CLEAR_EEPROM_CS
 return adress;
 }
 //--------------------------------------------------------------------------------
@@ -175,9 +222,12 @@ void eeprom_state_machine ()
 	{
 		case eeprom_state_idle:						eeprom_idle();	break;
 		case eeprom_state_read:						eeprom_read_page();	break;
+		case eeprom_state_refresh_rpointer:			eeprom_refresh_rpointer();break;
 		case eeprom_state_wait_for_collecting_data: eeprom_wait_for_collecting_data();break;
 		case eeprom_state_write:					eeprom_write_page(); break;
 		case eeprom_state_write_cycle:				eeprom_write_cycle();break;
+		case eeprom_state_refresh_wpointer:			eeprom_refresh_wpointer();break;
+		case eeprom_state_wpointer_cycle:			eeprom_wpointer_cycle();break;
 		case eeprom_state_erase:					eeprom_erase_page();break;
 		default: break;
 	}
@@ -207,9 +257,10 @@ static void eeprom_read_page ()
 {
 	uint8_t data_byte = 0;
 	uint16_t i=0;
+	uint32_t rpointer = eeprom_read_rpointer();
 	SET_EEPROM_CS
 	spi_send_byte(EEPROM_READ);									// read instruction
-	eeprom_write_adress(0x1FF00);
+	eeprom_write_adress(0x1FF00);//rpointer);
 	while(!cb_is_full(&eeprom_cb) && i<(EEPROM_BUFFER_SIZE-1))
 	{
 		data_byte = (spi_send_byte(NOP));							// dummy byte
@@ -218,16 +269,31 @@ static void eeprom_read_page ()
 	}
 	
 	CLEAR_EEPROM_CS
-	eeprom_state = eeprom_state_wait_for_collecting_data;
+	eeprom_state = eeprom_state_refresh_rpointer;
 	eeprom_flag=0;
-
 }
+//--------------------------------------------------------------------------------
+// Read instruction:
+//--------------------------------------------------------------------------------
+static void eeprom_refresh_rpointer(void)
+{
+	uint32_t rpointer = eeprom_read_rpointer();
+	eeprom_write_rpointer(rpointer+1);
+	eeprom_state = eeprom_state_wait_for_collecting_data;	
+}
+//--------------------------------------------------------------------------------
+// Write instruction:
+//--------------------------------------------------------------------------------
+
 
 static void eeprom_wait_for_collecting_data(void) 
 {
 	if(cb_is_empty(&eeprom_cb))
 	{
-		eeprom_state = eeprom_state_idle;
+		if(achieved_time(EEPROM_WRITE_CYCLE_MS, &eeprom_write_cycle_delay))
+		{	
+			eeprom_state = eeprom_state_idle;
+		}
 	}
 }
 
@@ -238,14 +304,14 @@ static void eeprom_write_page ()
 {
 	uint16_t i = 0;
 	uint8_t data_byte = 0;
-	eeprom_read_wpointer();
+	uint32_t wpointer = eeprom_read_wpointer();
 	SET_EEPROM_CS
 	spi_send_byte(EEPROM_WREN);									// write enable
 	CLEAR_EEPROM_CS
 	_delay_us(100);
 	SET_EEPROM_CS
 	spi_send_byte(EEPROM_WRITE);								// write instruction
-	eeprom_write_adress(0x100);
+	eeprom_write_adress(wpointer);
 	while((!cb_is_empty(&eeprom_cb)) && i<(EEPROM_BUFFER_SIZE-1))					// writes all data in EEPROM until the Buffer is empty OR the page size ist exeeded
 	{
 		cb_pop(&eeprom_cb,&data_byte,1);
@@ -259,15 +325,32 @@ static void eeprom_write_page ()
 //--------------------------------------------------------------------------------
 // Wait for eeprom to write data
 //--------------------------------------------------------------------------------
-
 static void eeprom_write_cycle(void)
 {
-	if(achieved_time(10 ,&eeprom_write_cycle_delay)) 
+	if(achieved_time(EEPROM_WRITE_CYCLE_MS ,&eeprom_write_cycle_delay)) 
 	{
 		eeprom_state = eeprom_state_refresh_wpointer;
 	}
 }
-
+//--------------------------------------------------------------------------------
+// Wait for eeprom to write data
+//--------------------------------------------------------------------------------
+static void eeprom_refresh_wpointer(void)
+{
+	uint32_t wpointer = eeprom_read_wpointer();
+	eeprom_write_wpointer(wpointer+1);
+	eeprom_state = eeprom_state_wpointer_cycle;
+}
+//--------------------------------------------------------------------------------
+// Wait for eeprom to write data
+//--------------------------------------------------------------------------------
+static void eeprom_wpointer_cycle(void)
+{
+	if(achieved_time(EEPROM_WRITE_CYCLE_MS ,&eeprom_write_cycle_delay))
+	{
+		eeprom_state = eeprom_state_idle;
+	}
+}
 //--------------------------------------------------------------------------------
 // Page erase instruction:
 //--------------------------------------------------------------------------------
