@@ -32,8 +32,7 @@ int main(void)
 {
     DDRB |= (1<<PB2);
 	PORTB &=~(1<<PB2);
-	DDRC |= (1<<PC3);
-
+	DDRC |= (1<<PC3)|(1<<PC2)|(1<<PC1)|(1<<PC0);
 	spi_init();
 	nrf_init();
 	system_time_init();
@@ -53,11 +52,25 @@ int main(void)
 	uint8_t k = 100, length=0, taster=0;
 	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	 //ow_start();
-	/*for(uint16_t i=126; i>0; i--) 
+	/*
+	for(uint16_t i=256; i>0; i--) 
 	{
 		cb_push(&eeprom_cb, &i, 1);
 		
 	}*/
+	uint8_t test = eeprom_put_data("12345", sizeof("12345"), 1);
+	//test = cb_push(&eeprom_cb,"12345", sizeof("12345"));
+	
+	
+	if(test == 2) {
+		PORTC |= (1<<PC0);
+	}
+	if(test == 1) {
+		PORTC |= (1<<PC1);
+	}
+	if(test == 0) {
+		PORTC |= (1<<PC2);
+	}
 	//eeprom_start_reading(1);
 	while(1) 
 	{
@@ -65,7 +78,7 @@ int main(void)
 		nrf_state_machine();
 		//dcf_state_machine();
 		//ow_state_machine();
-		//eeprom_state_machine();
+		eeprom_state_machine();
 		/*
 		if(ow_state_machine())
 		{
@@ -92,10 +105,10 @@ int main(void)
 			taster=0;
 		}
 		
-		if(achieved_time(100 ,&debug_delay)) 
+		if(achieved_time(10 ,&debug_delay)) 
 		{
 			//nrf_send("ich lebe noch :)...", sizeof("ich lebe noch :)..."));
-			if(k<6) 
+			if(k<30) 
 			{
 				itoa(buffer123[k], tmp, 10);
 				length = 0;
@@ -110,8 +123,11 @@ int main(void)
 				tmp[length]= '-';
 				nrf_send(tmp, sizeof(tmp));
 				k++;
+				for(int i=0; i<10; i++)
+				{
+					tmp[i]=0;
+				}
 			}
-			/*
 			if (eeprom_get_data(&k, 1))
 			{
 				itoa(k, tmp, 10);
@@ -127,20 +143,16 @@ int main(void)
 				tmp[length]= '-';
 				length++;
 				nrf_send(tmp, sizeof(tmp));
-			}*/
+			}
 			
 		}
 		
-		if(achieved_time(1000 ,&debug_delay2))
-		{
-			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
-			/*
-			
-			if(eeprom_start_reading(1)==2)
-			{
+		if(achieved_time(4000 ,&debug_delay2))
+		{	
+			if(cb_is_full(&eeprom_cb)) {
 				DEBUG_LED_PORT ^= 1 << DEBUG_LED;
 			}
-			*/
+			//eeprom_start_reading(1);
 		}
     }
 }
