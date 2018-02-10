@@ -28,6 +28,8 @@ extern Time_Data time;
 extern int16_t ow_temp, ow_temp2; 
 extern circular_buffer eeprom_cb;
 
+uint8_t eeprom_test = 0;
+
 int main(void) 
 {
     DDRB |= (1<<PB2);
@@ -49,29 +51,34 @@ int main(void)
 	uint64_t ID =	0xCF031661B4DDFF28;	//{0xCF}{0x03}{0x16}{0x61}{0xB4}{0xDD}{0xFF}{0x28} meins
 	char temp_string[10] = {0};
 	uint8_t buffer123[30] = {0};
-	uint8_t k = 100, length=0, taster=0;
+	uint8_t k = 100, length=0, taster=0, l=0;
+	uint16_t j = 300;
 	nrf_send("Outdoor Unit>> Begin:\n", sizeof("Outdoor Unit>> Begin:\n"));
 	 //ow_start();
-	/*
-	for(uint16_t i=256; i>0; i--) 
+	
+	/*for(uint16_t i=256; i>0; i--) 
 	{
-		cb_push(&eeprom_cb, &i, 1);
-		
+		eeprom_put_data(&i,1,0);
+		//cb_push(&eeprom_cb, &i, 1);	
 	}*/
-	uint8_t test = eeprom_put_data("12345", sizeof("12345"), 1);
-	//test = cb_push(&eeprom_cb,"12345", sizeof("12345"));
+	//uint8_t test2 = eeprom_put_data("12345", sizeof("12345"), 0);
+	//test2 = cb_push(&eeprom_cb,"12345", sizeof("12345"));
 	
-	
-	if(test == 2) {
+	/*
+	if(test2 == 2) 
+	{
 		PORTC |= (1<<PC0);
 	}
-	if(test == 1) {
+	if(test2 == 1) 
+	{
 		PORTC |= (1<<PC1);
 	}
-	if(test == 0) {
+	if(test2 == 0) 
+	{
 		PORTC |= (1<<PC2);
-	}
+	}*/
 	//eeprom_start_reading(1);
+	eeprom_start_erase_page(0x00);
 	while(1) 
 	{
 		
@@ -92,8 +99,10 @@ int main(void)
 			send_date();
 			dcf_ready = 0;
 		}*/
-		if(bit_is_clear(PIND, PD5)&&taster==0){
-			for(int i=0; i<30; i++){
+		if(bit_is_clear(PIND, PD5)&&taster==0)
+		{
+			for(int i=0; i<30; i++)
+			{
 				buffer123[i]=0;
 			}
 			_delay_ms(20);
@@ -101,7 +110,8 @@ int main(void)
 			read_irgendwas(0x1FF00, buffer123, 30);
 			k=0;
 		}
-		if(taster==1 && bit_is_set(PIND,PD5)) {
+		if(taster==1 && bit_is_set(PIND,PD5)) 
+		{
 			taster=0;
 		}
 		
@@ -128,9 +138,9 @@ int main(void)
 					tmp[i]=0;
 				}
 			}
-			if (eeprom_get_data(&k, 1))
+			if (eeprom_get_data(&l, 1))
 			{
-				itoa(k, tmp, 10);
+				itoa(l, tmp, 10);
 				length = 0;
 				while(tmp[length]!=0)
 				{
@@ -141,19 +151,52 @@ int main(void)
 					length++;
 				}
 				tmp[length]= '-';
-				length++;
+				//length++;
 				nrf_send(tmp, sizeof(tmp));
+				for(int i=0; i<10; i++)
+				{
+				tmp[i]=0;
+				}
 			}
+			/*
+			if(j < 256)
+			{
+				cb_pop(&eeprom_cb, string, 1); //cb_pop(&eeprom_cb, eeprom_data, eeprom_data_length)
+				itoa(string[0], tmp, 10);
+				length = 0;
+				while(tmp[length]!=0)
+				{
+					if(length >= 10 )
+					{
+						break;
+					}
+					length++;
+				}
+				tmp[length]= '-';
+				nrf_send(tmp, sizeof(tmp));
+				for(int i=0; i<10; i++)
+				{
+					tmp[i]=0;
+				}
+				j++;
+			}*/
 			
 		}
 		
 		if(achieved_time(4000 ,&debug_delay2))
 		{	
-			if(cb_is_full(&eeprom_cb)) {
-				DEBUG_LED_PORT ^= 1 << DEBUG_LED;
+			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
+			
+			if(cb_is_full(&eeprom_cb)) 
+			{
+				//DEBUG_LED_PORT ^= 1 << DEBUG_LED;
 			}
-			//eeprom_start_reading(1);
+			//read_irgendwas(0x00, eeprom_cb.buffer, 256);
+			j = 0;
+			eeprom_start_reading(0);
 		}
+		
+		
     }
 }
 
