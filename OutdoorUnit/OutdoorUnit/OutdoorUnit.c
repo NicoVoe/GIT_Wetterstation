@@ -12,6 +12,7 @@
 #include "DCF77.h"
 #include "OneWire.h"
 #include "EEPROM.h"
+#include "I2C_MASTER.h"
 
 
 #define DEBUG_LED_DDR DDRB
@@ -40,6 +41,7 @@ int main(void)
 	system_time_init();
 	ow_init();
 	eeprom_init();
+	i2c_init();
 	sei();
 	_delay_ms(1000);
 
@@ -78,14 +80,16 @@ int main(void)
 		PORTC |= (1<<PC2);
 	}*/
 	//eeprom_start_reading(1);
-	eeprom_start_erase_page(0x00);
+	//eeprom_start_erase_page(0x00);
+	i2c_send_data(0x76, "huhu", 2);
 	while(1) 
 	{
 		
 		nrf_state_machine();
+		i2c_state_machine();
 		//dcf_state_machine();
 		//ow_state_machine();
-		eeprom_state_machine();
+		//eeprom_state_machine();
 		/*
 		if(ow_state_machine())
 		{
@@ -99,6 +103,7 @@ int main(void)
 			send_date();
 			dcf_ready = 0;
 		}*/
+		/*
 		if(bit_is_clear(PIND, PD5)&&taster==0)
 		{
 			for(int i=0; i<30; i++)
@@ -114,7 +119,7 @@ int main(void)
 		{
 			taster=0;
 		}
-		
+		*/
 		if(achieved_time(10 ,&debug_delay)) 
 		{
 			//nrf_send("ich lebe noch :)...", sizeof("ich lebe noch :)..."));
@@ -183,20 +188,10 @@ int main(void)
 			
 		}
 		
-		if(achieved_time(4000 ,&debug_delay2))
+		if(achieved_time(1000 ,&debug_delay2))
 		{	
 			DEBUG_LED_PORT ^= 1 << DEBUG_LED;
-			
-			if(cb_is_full(&eeprom_cb)) 
-			{
-				//DEBUG_LED_PORT ^= 1 << DEBUG_LED;
-			}
-			//read_irgendwas(0x00, eeprom_cb.buffer, 256);
-			j = 0;
-			eeprom_start_reading(0);
 		}
-		
-		
     }
 }
 

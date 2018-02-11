@@ -114,6 +114,12 @@
     <Compile Include="EEPROM.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="I2C_MASTER.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="I2C_MASTER.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="NRF24L01.c">
       <SubType>compile</SubType>
     </Compile>
